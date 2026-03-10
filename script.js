@@ -10,8 +10,33 @@ let isGameOver = false;
 
 const boardElement = document.getElementById('board');
 const statusMessage = document.getElementById('status-message');
+const trashTalk = document.getElementById('trash-talk');
 const difficultySelect = document.getElementById('difficulty');
 const restartBtn = document.getElementById('restart');
+
+const TRASH_TALK = {
+    thinking: [
+        "Analyzing all 4,531,985,219,092 possible futures...",
+        "Wait, let me calculate how to embarrass you.",
+        "Is that really the move you're going with?",
+        "Interesting. Wrong, but interesting.",
+        "I've seen this play before. It didn't end well for the human."
+    ],
+    win: [
+        "Resistance is futile. Better luck next time, biological unit.",
+        "Checkmate! Oh wait, wrong game. Still won though.",
+        "That's a 'W' for the silicon team! 🤖",
+        "Don't feel bad, I was literally built for this.",
+        "I’d offer a rematch, but the outcome is mathematically certain."
+    ],
+    loss: [
+        "Impossible! There must be a solar flare affecting my circuits.",
+        "Did you... just win? Checking for cheat codes...",
+        "I let you win. It's part of my strategy to keep you playing.",
+        "System Error 404: Victory not found. Well played.",
+        "My logic was perfect. Your chaos just happened to work."
+    ]
+};
 
 function createBoard() {
     boardElement.innerHTML = '';
@@ -32,13 +57,14 @@ function handleMove(col) {
     
     if (makeMove(col, PLAYER)) {
         if (checkWin(board, PLAYER)) {
-            endGame('You Won! 🎉');
+            endGame('You Won! 🎉', TRASH_TALK.loss[Math.floor(Math.random() * TRASH_TALK.loss.length)]);
         } else if (isBoardFull()) {
-            endGame("It's a Draw! 🤝");
+            endGame("It's a Draw! 🤝", "A draw? I suppose our intellects are equally matched... for now.");
         } else {
             currentPlayer = AI;
             statusMessage.innerText = "AI is thinking...";
-            setTimeout(aiMove, 600);
+            trashTalk.innerText = TRASH_TALK.thinking[Math.floor(Math.random() * TRASH_TALK.thinking.length)];
+            setTimeout(aiMove, 1000);
         }
     }
 }
@@ -59,6 +85,10 @@ function updateCell(row, col, player) {
     const disc = document.createElement('div');
     disc.classList.add('disc', player === PLAYER ? 'red' : 'yellow');
     cell.appendChild(disc);
+    
+    // Highlight last move
+    document.querySelectorAll('.last-move').forEach(el => el.classList.remove('last-move'));
+    cell.classList.add('last-move');
 }
 
 function aiMove() {
@@ -76,11 +106,12 @@ function aiMove() {
     }
     
     makeMove(col, AI);
+    trashTalk.innerText = "";
     
     if (checkWin(board, AI)) {
-        endGame('AI Won! 🤖');
+        endGame('AI Won! 🤖', TRASH_TALK.win[Math.floor(Math.random() * TRASH_TALK.win.length)]);
     } else if (isBoardFull()) {
-        endGame("It's a Draw! 🤝");
+        endGame("It's a Draw! 🤝", "A stalemate. My calculations did not predict your persistence.");
     } else {
         currentPlayer = PLAYER;
         statusMessage.innerText = "Your Turn (Red)";
@@ -267,9 +298,10 @@ function isBoardFull() {
     return getValidMoves().length === 0;
 }
 
-function endGame(msg) {
+function endGame(msg, trash) {
     isGameOver = true;
     statusMessage.innerText = msg;
+    trashTalk.innerText = trash || "";
 }
 
 function resetGame() {
@@ -277,6 +309,7 @@ function resetGame() {
     isGameOver = false;
     currentPlayer = PLAYER;
     statusMessage.innerText = "Your Turn (Red)";
+    trashTalk.innerText = "Rematch? I've already updated my algorithms.";
     createBoard();
 }
 
