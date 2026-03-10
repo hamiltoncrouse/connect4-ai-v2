@@ -1,0 +1,12 @@
+blueprint:
+  name: Connect 4 AI
+  version: 1.0.0
+  description: Connect 4 against an AI opponent (Easy/Medium/Hard)
+  preview:
+    url: index.html
+    width: 600
+    height: 800
+  files:
+    - index.html
+    - style.css
+    - script.js
