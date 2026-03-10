@@ -119,93 +119,74 @@ button:hover {
     align-items: center;
     justify-content: center;
     margin: 10px 0 20px 0;
-    min-height: 80px;
+    min-height: 100px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
-    padding: 10px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #trash-talk {
     font-style: italic;
     color: #ff9f43;
     font-weight: 500;
-    margin-bottom: 10px;
-    height: 1.5em;
+    margin-bottom: 15px;
+    min-height: 1.5em;
     text-align: center;
+    line-height: 1.4;
+    max-width: 400px;
 }
 
 #ai-avatar {
+    background-color: #34495e;
+    border: 1px solid #7f8c8d;
+    border-radius: 8px;
+    padding: 5px 15px;
+    color: white;
     cursor: pointer;
-    transition: transform 0.1s, filter 0.1s;
-    user-select: none;
-    position: relative;
-    width: 40px;
-    height: 35px;
-}
-
-.robot-head {
-    width: 100%;
-    height: 100%;
-    background-color: #bdc3c7;
-    border: 3px solid #7f8c8d;
-    border-radius: 5px;
-    position: relative;
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s;
+    user-select: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-.robot-head::before { /* Antenna */
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: 10px;
-    background-color: #7f8c8d;
-}
-
-.robot-head::after { /* Antenna Ball */
-    content: '';
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    background-color: #e74c3c;
-    border-radius: 50%;
-}
-
-.eye {
-    width: 6px;
-    height: 6px;
+#ai-avatar:hover {
     background-color: #2c3e50;
-    border-radius: 50%;
-    position: absolute;
-    top: 8px;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.4);
 }
 
-.eye.left { left: 8px; }
-.eye.right { right: 8px; }
-
-.mouth {
-    width: 15px;
-    height: 4px;
-    background-color: #2c3e50;
-    border-radius: 2px;
-    position: absolute;
-    bottom: 6px;
+#ai-avatar:active {
+    transform: translateY(0);
 }
 
-#ai-avatar.shocked .eye {
-    background-color: #f1c40f;
-    box-shadow: 0 0 5px #f1c40f;
-}
-
-#ai-avatar.shocked .robot-head {
+#ai-avatar.shocked {
+    animation: shake 0.2s infinite;
+    background-color: #e67e22;
     border-color: #f1c40f;
+    box-shadow: 0 0 15px #f1c40f;
+}
+
+#ai-avatar.shocked svg path {
+    fill: #f1c40f;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
 @keyframes shake {

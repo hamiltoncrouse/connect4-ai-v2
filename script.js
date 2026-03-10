@@ -105,6 +105,7 @@ function handleMove(col) {
     
     if (makeMove(col, PLAYER)) {
         sounds.drop();
+        trashTalk.innerText = ""; // Clear on move
         if (checkWin(board, PLAYER)) {
             sounds.loss();
             endGame('You Won! 🎉', TRASH_TALK.loss[Math.floor(Math.random() * TRASH_TALK.loss.length)]);
