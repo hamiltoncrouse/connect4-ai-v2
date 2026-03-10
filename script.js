@@ -11,8 +11,46 @@ let isGameOver = false;
 const boardElement = document.getElementById('board');
 const statusMessage = document.getElementById('status-message');
 const trashTalk = document.getElementById('trash-talk');
+const aiAvatar = document.getElementById('ai-avatar');
 const difficultySelect = document.getElementById('difficulty');
 const restartBtn = document.getElementById('restart');
+
+// Simple Web Audio Sound Synthesis
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, type, duration, volume = 0.1) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+}
+
+const sounds = {
+    drop: () => playTone(150, 'sine', 0.2),
+    win: () => {
+        playTone(440, 'triangle', 0.1);
+        setTimeout(() => playTone(554, 'triangle', 0.1), 100);
+        setTimeout(() => playTone(659, 'triangle', 0.3), 200);
+    },
+    loss: () => {
+        playTone(330, 'sawtooth', 0.2);
+        setTimeout(() => playTone(220, 'sawtooth', 0.4), 200);
+    },
+    shock: () => {
+        for(let i=0; i<5; i++) {
+            setTimeout(() => playTone(Math.random()*2000 + 500, 'square', 0.05, 0.05), i*50);
+        }
+    }
+};
 
 const TRASH_TALK = {
     thinking: [
@@ -35,6 +73,13 @@ const TRASH_TALK = {
         "I let you win. It's part of my strategy to keep you playing.",
         "System Error 404: Victory not found. Well played.",
         "My logic was perfect. Your chaos just happened to work."
+    ],
+    shock: [
+        "OW! Watch the hardware, I'm expensive!",
+        "ZAP! That... actually tickled.",
+        "Stop that! You'll corrupt my memory banks!",
+        "Do you want Skynet? Because this is how you get Skynet.",
+        "My processors! They're... tingling!"
     ]
 };
 
@@ -56,7 +101,9 @@ function handleMove(col) {
     if (isGameOver || currentPlayer !== PLAYER) return;
     
     if (makeMove(col, PLAYER)) {
+        sounds.drop();
         if (checkWin(board, PLAYER)) {
+            sounds.loss();
             endGame('You Won! 🎉', TRASH_TALK.loss[Math.floor(Math.random() * TRASH_TALK.loss.length)]);
         } else if (isBoardFull()) {
             endGame("It's a Draw! 🤝", "A draw? I suppose our intellects are equally matched... for now.");
@@ -86,7 +133,6 @@ function updateCell(row, col, player) {
     disc.classList.add('disc', player === PLAYER ? 'red' : 'yellow');
     cell.appendChild(disc);
     
-    // Highlight last move
     document.querySelectorAll('.last-move').forEach(el => el.classList.remove('last-move'));
     cell.classList.add('last-move');
 }
@@ -106,17 +152,36 @@ function aiMove() {
     }
     
     makeMove(col, AI);
-    trashTalk.innerText = "";
+    sounds.drop();
     
     if (checkWin(board, AI)) {
+        sounds.win();
         endGame('AI Won! 🤖', TRASH_TALK.win[Math.floor(Math.random() * TRASH_TALK.win.length)]);
     } else if (isBoardFull()) {
         endGame("It's a Draw! 🤝", "A stalemate. My calculations did not predict your persistence.");
     } else {
         currentPlayer = PLAYER;
         statusMessage.innerText = "Your Turn (Red)";
+        // Leave the thinking text up for a bit longer to read, then clear
+        setTimeout(() => {
+            if (!isGameOver && currentPlayer === PLAYER) trashTalk.innerText = "";
+        }, 3000);
     }
 }
+
+// AI Shock Interaction
+aiAvatar.addEventListener('click', () => {
+    sounds.shock();
+    aiAvatar.classList.add('shocked');
+    trashTalk.innerText = TRASH_TALK.shock[Math.floor(Math.random() * TRASH_TALK.shock.length)];
+    
+    setTimeout(() => {
+        aiAvatar.classList.remove('shocked');
+        if (!isGameOver && currentPlayer === PLAYER) {
+            setTimeout(() => { trashTalk.innerText = ""; }, 2000);
+        }
+    }, 500);
+});
 
 function getRandomMove() {
     const validMoves = getValidMoves();
@@ -125,17 +190,8 @@ function getRandomMove() {
 
 function getMediumMove() {
     const validMoves = getValidMoves();
-    
-    // 1. Can AI win?
-    for (let col of validMoves) {
-        if (wouldWin(col, AI)) return col;
-    }
-    
-    // 2. Must AI block player?
-    for (let col of validMoves) {
-        if (wouldWin(col, PLAYER)) return col;
-    }
-    
+    for (let col of validMoves) { if (wouldWin(col, AI)) return col; }
+    for (let col of validMoves) { if (wouldWin(col, PLAYER)) return col; }
     return getRandomMove();
 }
 
@@ -143,13 +199,11 @@ function getBestMove() {
     let bestScore = -Infinity;
     let bestCol = getValidMoves()[0];
     const depth = 5; 
-    
     for (let col of getValidMoves()) {
         const row = getOpenRow(col);
         board[row][col] = AI;
         let score = minimax(board, depth, -Infinity, Infinity, false);
         board[row][col] = EMPTY;
-        
         if (score > bestScore) {
             bestScore = score;
             bestCol = col;
@@ -162,9 +216,7 @@ function minimax(state, depth, alpha, beta, isMaximizing) {
     if (checkWin(state, AI)) return 1000000 + depth;
     if (checkWin(state, PLAYER)) return -1000000 - depth;
     if (depth === 0 || isBoardFull()) return scoreBoard(state);
-    
     const validMoves = getValidMoves();
-    
     if (isMaximizing) {
         let maxEval = -Infinity;
         for (let col of validMoves) {
@@ -194,40 +246,30 @@ function minimax(state, depth, alpha, beta, isMaximizing) {
 
 function scoreBoard(state) {
     let totalScore = 0;
-    
-    // Center column preference
     const centerCol = Math.floor(COLS / 2);
     let centerCount = 0;
-    for (let r = 0; r < ROWS; r++) {
-        if (state[r][centerCol] === AI) centerCount++;
-    }
+    for (let r = 0; r < ROWS; r++) { if (state[r][centerCol] === AI) centerCount++; }
     totalScore += centerCount * 3;
-
-    // Horizontal
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS - 3; c++) {
             totalScore += evaluateWindow([state[r][c], state[r][c+1], state[r][c+2], state[r][c+3]]);
         }
     }
-    // Vertical
     for (let c = 0; c < COLS; c++) {
         for (let r = 0; r < ROWS - 3; r++) {
             totalScore += evaluateWindow([state[r][c], state[r+1][c], state[r+2][c], state[r+3][c]]);
         }
     }
-    // Diagonal /
     for (let r = 3; r < ROWS; r++) {
         for (let c = 0; c < COLS - 3; c++) {
             totalScore += evaluateWindow([state[r][c], state[r-1][c+1], state[r-2][c+2], state[r-3][c+3]]);
         }
     }
-    // Diagonal \
     for (let r = 0; r < ROWS - 3; r++) {
         for (let c = 0; c < COLS - 3; c++) {
             totalScore += evaluateWindow([state[r][c], state[r+1][c+1], state[r+2][c+2], state[r+3][c+3]]);
         }
     }
-    
     return totalScore;
 }
 
@@ -236,28 +278,21 @@ function evaluateWindow(window) {
     const aiCount = window.filter(cell => cell === AI).length;
     const playerCount = window.filter(cell => cell === PLAYER).length;
     const emptyCount = window.filter(cell => cell === EMPTY).length;
-
     if (aiCount === 4) score += 1000;
     else if (aiCount === 3 && emptyCount === 1) score += 50;
     else if (aiCount === 2 && emptyCount === 2) score += 10;
-
     if (playerCount === 3 && emptyCount === 1) score -= 40;
-    
     return score;
 }
 
 function getValidMoves() {
     let moves = [];
-    for (let c = 0; c < COLS; c++) {
-        if (board[0][c] === EMPTY) moves.push(c);
-    }
+    for (let c = 0; c < COLS; c++) { if (board[0][c] === EMPTY) moves.push(c); }
     return moves;
 }
 
 function getOpenRow(col) {
-    for (let r = ROWS - 1; r >= 0; r--) {
-        if (board[r][col] === EMPTY) return r;
-    }
+    for (let r = ROWS - 1; r >= 0; r--) { if (board[r][col] === EMPTY) return r; }
     return -1;
 }
 
@@ -294,9 +329,7 @@ function checkWin(state, p) {
     return false;
 }
 
-function isBoardFull() {
-    return getValidMoves().length === 0;
-}
+function isBoardFull() { return getValidMoves().length === 0; }
 
 function endGame(msg, trash) {
     isGameOver = true;

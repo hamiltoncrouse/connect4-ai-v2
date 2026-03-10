@@ -113,12 +113,51 @@ button:hover {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
+#trash-talk-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 10px 0;
+    min-height: 50px;
+}
+
 #trash-talk {
     font-style: italic;
     color: #ff9f43;
-    margin-top: 10px;
-    height: 1.5em;
     font-weight: 500;
+    flex: 1;
+    max-width: 300px;
+}
+
+#ai-avatar {
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.1s;
+    user-select: none;
+}
+
+#ai-avatar:hover {
+    transform: scale(1.1);
+}
+
+#ai-avatar.shocked {
+    animation: shake 0.2s infinite;
+    filter: drop-shadow(0 0 10px yellow) brightness(1.5);
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
 .cell::after {
