@@ -19,6 +19,9 @@ const restartBtn = document.getElementById('restart');
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playTone(freq, type, duration, volume = 0.1) {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     
@@ -162,15 +165,16 @@ function aiMove() {
     } else {
         currentPlayer = PLAYER;
         statusMessage.innerText = "Your Turn (Red)";
-        // Leave the thinking text up for a bit longer to read, then clear
+        // Extended time for human to read
         setTimeout(() => {
             if (!isGameOver && currentPlayer === PLAYER) trashTalk.innerText = "";
-        }, 3000);
+        }, 6000);
     }
 }
 
 // AI Shock Interaction
-aiAvatar.addEventListener('click', () => {
+aiAvatar.addEventListener('mousedown', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     sounds.shock();
     aiAvatar.classList.add('shocked');
     trashTalk.innerText = TRASH_TALK.shock[Math.floor(Math.random() * TRASH_TALK.shock.length)];
@@ -178,7 +182,9 @@ aiAvatar.addEventListener('click', () => {
     setTimeout(() => {
         aiAvatar.classList.remove('shocked');
         if (!isGameOver && currentPlayer === PLAYER) {
-            setTimeout(() => { trashTalk.innerText = ""; }, 2000);
+            setTimeout(() => { 
+                if (currentPlayer === PLAYER) trashTalk.innerText = ""; 
+            }, 4000);
         }
     }, 500);
 });
